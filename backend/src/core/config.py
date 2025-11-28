@@ -4,12 +4,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Get the absolute path to the project root and .env.local file
-# From: /Users/.../cardozi/backend/src/core/config.py
-# To:   /Users/.../cardozi/.env.local  
+# Load .env.local for local development only
 project_root = Path(__file__).resolve().parent.parent.parent.parent  # backend/src/core -> cardozi/
 env_path = project_root / ".env.local"
-load_dotenv(env_path)
+if env_path.exists():
+    load_dotenv(env_path)
 
 class Settings(BaseSettings):
     # Database
@@ -29,6 +28,7 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = False
         extra = "ignore"  # Ignore extra fields like NEXT_PUBLIC_API_URL
+        env_file = None  # Don't try to load .env files in production
 
 
 settings = Settings()
