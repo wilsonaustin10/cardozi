@@ -23,4 +23,4 @@ COPY backend/ .
 RUN chmod +x start.sh
 
 # Default entrypoint
-CMD ["./start.sh"]
+CMD ["bash", "start.sh"]

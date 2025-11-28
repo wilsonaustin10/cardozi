@@ -3,5 +3,5 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "./start.sh"
+startCommand = "bash start.sh"
 restartPolicyType = "always"
