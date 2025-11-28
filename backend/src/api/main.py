@@ -14,7 +14,11 @@ app = FastAPI(title=settings.app_name, debug=settings.debug)
 # CORS middleware for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://cardozi.vercel.app",  # Production frontend (when deployed)
+        "https://*.vercel.app"  # Allow any Vercel preview deployments
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
