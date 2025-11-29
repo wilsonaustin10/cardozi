@@ -137,16 +137,27 @@ async def start_project(project_id: str, db: AsyncSession = Depends(get_db)):
     if project.status == "RUNNING":
         raise HTTPException(status_code=400, detail="Project is already running")
     
+    # Check if Redis/Celery is available by testing connection
     try:
-        # Try to start the agent workflow asynchronously with Celery
-        task = run_agent_workflow.delay(project_id)
-        return {
-            "message": "Project started with Celery worker",
-            "project_id": project_id,
-            "task_id": task.id
-        }
+        from src.worker.celery_app import celery
+        # Try to inspect active workers
+        inspect = celery.control.inspect()
+        active_workers = inspect.active()
+        
+        if active_workers and len(active_workers) > 0:
+            # Workers are available, use Celery
+            task = run_agent_workflow.delay(project_id)
+            return {
+                "message": "Project started with Celery worker",
+                "project_id": project_id,
+                "task_id": task.id
+            }
+        else:
+            # No workers available, use simulation mode
+            raise Exception("No Celery workers available")
+            
     except Exception as e:
-        # If Celery/Redis is not available, run a quick simulation
+        # If Celery/Redis is not available or no workers, run simulation
         import asyncio
         from datetime import datetime
         
@@ -156,14 +167,14 @@ async def start_project(project_id: str, db: AsyncSession = Depends(get_db)):
         
         # Simulate agent workflow with a delay
         async def simulate_workflow():
-            await asyncio.sleep(3)  # Simulate 3 seconds of work
-            # Update to IDLE when done
-            result = await db.execute(select(Project).where(Project.id == project_id))
-            project = result.scalar_one_or_none()
-            if project:
-                project.status = "IDLE"
-                project.active_session_id = "simulated-session-" + str(int(datetime.utcnow().timestamp()))
-                await db.commit()
+            await asyncio.sleep(5)  # Simulate 5 seconds of work
+            # Refresh project from database
+            async with db.begin():
+                result = await db.execute(select(Project).where(Project.id == project_id))
+                proj = result.scalar_one_or_none()
+                if proj:
+                    proj.status = "IDLE"
+                    proj.active_session_id = "simulated-session-" + str(int(datetime.utcnow().timestamp()))
         
         # Run simulation in background
         asyncio.create_task(simulate_workflow())
@@ -171,7 +182,8 @@ async def start_project(project_id: str, db: AsyncSession = Depends(get_db)):
         return {
             "message": "Project started in simulation mode (no Celery worker available)",
             "project_id": project_id,
-            "mode": "simulation"
+            "mode": "simulation",
+            "reason": str(e)
         }
 
 
