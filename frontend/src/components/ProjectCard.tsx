@@ -68,7 +68,7 @@ export function ProjectCard({
           View
         </Button>
         
-        {project.status === 'IDLE' && (
+        {(project.status === 'IDLE' || project.status === 'INITIALIZING') && (
           <Button variant="default" size="sm" onClick={() => onStart?.(project)}>
             <Play className="w-4 h-4 mr-1" />
             Start

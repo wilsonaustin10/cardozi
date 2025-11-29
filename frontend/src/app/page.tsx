@@ -75,7 +75,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadProjects();
-  }, []);
+    
+    // Set up auto-refresh every 2 seconds to see status changes
+    const interval = setInterval(() => {
+      if (!isLoading) {
+        loadProjects();
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   return (
     <div className="min-h-screen bg-gray-50">
