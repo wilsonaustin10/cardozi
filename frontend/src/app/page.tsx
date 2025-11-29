@@ -49,16 +49,20 @@ export default function Dashboard() {
   };
 
   const handleViewProject = (project: Project) => {
+    console.log('✅ Dashboard: View project handler called:', project.id);
     // TODO: Navigate to project detail view
-    console.log('View project:', project);
+    alert(`Viewing project ${project.id.slice(0, 8)}... - Navigate to detail view not implemented yet`);
   };
 
   const handleStartProject = async (project: Project) => {
+    console.log('✅ Dashboard: Start project handler called:', project.id);
     try {
-      await apiClient.startProject(project.id);
+      console.log('📤 Calling API to start project...');
+      const result = await apiClient.startProject(project.id);
+      console.log('✅ Project start response:', result);
       loadProjects(); // Refresh to see updated status
     } catch (error) {
-      console.error('Failed to start project:', error);
+      console.error('❌ Failed to start project:', error);
       alert('Failed to start project. Please try again.');
     }
   };

@@ -29,6 +29,27 @@ export function ProjectCard({
   onStop, 
   onDelete 
 }: ProjectCardProps) {
+  
+  const handleViewClick = () => {
+    console.log('View button clicked for project:', project.id);
+    onView?.(project);
+  };
+  
+  const handleStartClick = () => {
+    console.log('Start button clicked for project:', project.id);
+    onStart?.(project);
+  };
+  
+  const handleStopClick = () => {
+    console.log('Stop button clicked for project:', project.id);
+    onStop?.(project);
+  };
+  
+  const handleDeleteClick = () => {
+    console.log('Delete button clicked for project:', project.id);
+    onDelete?.(project);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -63,26 +84,26 @@ export function ProjectCard({
       </CardContent>
       
       <CardFooter className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => onView?.(project)}>
+        <Button variant="outline" size="sm" onClick={handleViewClick}>
           <Eye className="w-4 h-4 mr-1" />
           View
         </Button>
         
         {(project.status === 'IDLE' || project.status === 'INITIALIZING') && (
-          <Button variant="default" size="sm" onClick={() => onStart?.(project)}>
+          <Button variant="default" size="sm" onClick={handleStartClick}>
             <Play className="w-4 h-4 mr-1" />
             Start
           </Button>
         )}
         
         {project.status === 'RUNNING' && (
-          <Button variant="secondary" size="sm" onClick={() => onStop?.(project)}>
+          <Button variant="secondary" size="sm" onClick={handleStopClick}>
             <Pause className="w-4 h-4 mr-1" />
             Stop
           </Button>
         )}
         
-        <Button variant="destructive" size="sm" onClick={() => onDelete?.(project)}>
+        <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
           <Trash2 className="w-4 h-4 mr-1" />
           Delete
         </Button>
