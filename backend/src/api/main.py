@@ -5,6 +5,7 @@ from sqlalchemy import select
 from src.core.database import get_db, create_tables
 from src.core.config import settings
 from src.domain.models import Project
+from src.worker.tasks import run_agent_workflow
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import uuid
@@ -122,6 +123,64 @@ async def get_project(project_id: str, db: AsyncSession = Depends(get_db)):
         live_stream_url=project.live_stream_url,
         active_session_id=project.active_session_id
     )
+
+
+@app.post("/projects/{project_id}/start")
+async def start_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Start a project's agent workflow"""
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    if project.status == "RUNNING":
+        raise HTTPException(status_code=400, detail="Project is already running")
+    
+    # Start the agent workflow asynchronously
+    task = run_agent_workflow.delay(project_id)
+    
+    return {
+        "message": "Project started",
+        "project_id": project_id,
+        "task_id": task.id
+    }
+
+
+@app.post("/projects/{project_id}/stop")
+async def stop_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Stop a project's agent workflow"""
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Update project status to IDLE (stopping the workflow)
+    project.status = "IDLE"
+    project.active_session_id = None
+    project.live_stream_url = None
+    await db.commit()
+    
+    return {
+        "message": "Project stopped",
+        "project_id": project_id
+    }
+
+
+@app.delete("/projects/{project_id}")
+async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Delete a project"""
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    await db.delete(project)
+    await db.commit()
+    
+    return {"message": "Project deleted", "project_id": project_id}
 
 
 if __name__ == "__main__":

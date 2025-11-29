@@ -38,8 +38,13 @@ export default function Dashboard() {
 
   const handleDeleteProject = async (project: Project) => {
     if (confirm(`Are you sure you want to delete project ${project.id.slice(0, 8)}...?`)) {
-      // TODO: Implement delete API call when backend supports it
-      console.log('Delete project:', project.id);
+      try {
+        await apiClient.deleteProject(project.id);
+        loadProjects(); // Refresh the list
+      } catch (error) {
+        console.error('Failed to delete project:', error);
+        alert('Failed to delete project. Please try again.');
+      }
     }
   };
 
@@ -49,13 +54,23 @@ export default function Dashboard() {
   };
 
   const handleStartProject = async (project: Project) => {
-    // TODO: Implement start/stop API calls when backend supports it
-    console.log('Start project:', project.id);
+    try {
+      await apiClient.startProject(project.id);
+      loadProjects(); // Refresh to see updated status
+    } catch (error) {
+      console.error('Failed to start project:', error);
+      alert('Failed to start project. Please try again.');
+    }
   };
 
   const handleStopProject = async (project: Project) => {
-    // TODO: Implement start/stop API calls when backend supports it
-    console.log('Stop project:', project.id);
+    try {
+      await apiClient.stopProject(project.id);
+      loadProjects(); // Refresh to see updated status
+    } catch (error) {
+      console.error('Failed to stop project:', error);
+      alert('Failed to stop project. Please try again.');
+    }
   };
 
   useEffect(() => {
