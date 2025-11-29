@@ -1,11 +1,7 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "backend/Dockerfile"
 
 [deploy]
 startCommand = "SERVICE_TYPE=worker bash start.sh"
 restartPolicyType = "always"
-
-[services]
-api = { start = "uvicorn src.api.main:app --host 0.0.0.0 --port $PORT" }
-worker = { start = "SERVICE_TYPE=worker bash start.sh" }

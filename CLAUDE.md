@@ -51,6 +51,29 @@ cd frontend
 npm run dev
 ```
 
+**Frontend development commands:**
+```bash
+# Build production version
+npm run build
+
+# Start production server
+npm start
+
+# Run linter
+npm run lint
+```
+
+**Backend testing:**
+```bash
+cd backend
+source venv/bin/activate
+# Install dependencies
+pip install -r requirements.txt
+
+# Test database connection
+python src/core/test_db.py
+```
+
 ### Environment Configuration
 
 Create `.env.local` in the root directory:
@@ -68,24 +91,33 @@ NEXT_PUBLIC_API_URL="http://localhost:8000"
 ## Core Components
 
 ### Database Models (`backend/src/domain/models.py`)
-- **Project**: Main entity storing CRM project state, browser sessions, and authentication cookies
-- Fields: `id`, `status`, `system_prompt`, `output_schema`, `auth_cookies`, `live_stream_url`, `active_session_id`
+- **Project**: Main entity with status-driven workflow
+  - States: `INITIALIZING`, `IDLE`, `RUNNING`, `BLOCKED` 
+  - Configuration: `system_prompt`, `output_schema` (AI agent settings)
+  - Session data: `auth_cookies`, `live_stream_url`, `active_session_id`
+  - Timestamps: `created_at`, `updated_at`
 
 ### Worker Tasks (`backend/src/worker/tasks.py`)
-- `run_agent_workflow`: Executes browser automation using Browser Use SDK
-- Handles cloud browser initialization, agent execution, and error states (BLOCKED for CAPTCHAs)
+- `run_agent_workflow`: Core Celery task for browser automation
+- Uses Browser Use SDK with async workflow execution
+- Handles project status transitions and error recovery
+- Supports session persistence for blocked states
 
 ### API Layer (`backend/src/api/main.py`)
-- FastAPI gateway for project management and task queuing
-- Interfaces between frontend and Celery worker
+- FastAPI with CORS for localhost and Vercel deployment
+- Project CRUD operations with database integration
+- Task queuing interface to Celery workers
+- Startup event creates database tables
 
 ## Deployment Strategy
 
 ### Railway (Backend)
-- Uses same Docker image for both API and Worker services
-- Service differentiation via `SERVICE_TYPE` environment variable
-- API service: `SERVICE_TYPE=api`
-- Worker service: `SERVICE_TYPE=worker`
+- Single Dockerfile builds both API and Worker services
+- Service differentiation via `SERVICE_TYPE` environment variable and start commands:
+  - API service: Default `bash start.sh` (no SERVICE_TYPE)
+  - Worker service: `SERVICE_TYPE=worker bash start.sh`
+- Configuration files: `railway.toml` (API) and `railway-worker.toml` (Worker)
+- Chrome browser dependencies included for Browser Use automation
 
 ### Vercel (Frontend)
 - Automatic deployment from `frontend/` directory
@@ -107,3 +139,23 @@ Projects have four states: `INITIALIZING`, `IDLE`, `RUNNING`, `BLOCKED`
 - CAPTCHA and blocking scenarios transition to `BLOCKED` state
 - Browser sessions remain open for manual completion
 - Resume functionality restores exact session state
+
+## Development Workflow
+
+### Adding New Features
+1. **Frontend**: Components use Radix UI + Tailwind CSS patterns
+2. **Backend**: Follow FastAPI router patterns and async/await
+3. **Database**: Use SQLAlchemy models with UUID primary keys
+4. **Tasks**: Implement as Celery tasks with proper status management
+
+### Debugging
+- API logs: Check Railway deployment logs for FastAPI service
+- Worker logs: Check Railway deployment logs for Worker service  
+- Frontend logs: Browser console and Vercel function logs
+- Database: Use `python src/core/test_db.py` for connection testing
+
+### Common Issues
+- **Celery worker not found**: Ensure Worker service is deployed and Redis is accessible
+- **CORS errors**: Verify frontend URL is in CORS origins list
+- **Database connection**: Check DATABASE_URL format and SSL requirements
+- **Browser automation fails**: Verify BROWSER_USE_API_KEY and Chrome dependencies
