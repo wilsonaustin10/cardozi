@@ -137,24 +137,11 @@ async def start_project(project_id: str, db: AsyncSession = Depends(get_db)):
     if project.status == "RUNNING":
         raise HTTPException(status_code=400, detail="Project is already running")
     
-    # Check if Redis/Celery is available by testing connection
+    # Always use simulation mode for now since Celery worker is unstable on Railway
+    # TODO: Implement proper Celery worker deployment when ready for production
     try:
-        from src.worker.celery_app import celery
-        # Try to inspect active workers
-        inspect = celery.control.inspect()
-        active_workers = inspect.active()
-        
-        if active_workers and len(active_workers) > 0:
-            # Workers are available, use Celery
-            task = run_agent_workflow.delay(project_id)
-            return {
-                "message": "Project started with Celery worker",
-                "project_id": project_id,
-                "task_id": task.id
-            }
-        else:
-            # No workers available, use simulation mode
-            raise Exception("No Celery workers available")
+        # Skip Celery detection and go straight to simulation mode
+        raise Exception("Using simulation mode by design")
             
     except Exception as e:
         # If Celery/Redis is not available or no workers, run simulation
