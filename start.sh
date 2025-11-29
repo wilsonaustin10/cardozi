@@ -2,10 +2,9 @@
 
 # Detect mode based on Railway Service Variable
 if [ "$SERVICE_TYPE" = "worker" ]; then
-    echo "🚧 Celery Worker disabled for Railway deployment"
-    echo "   Using simulation mode instead. For production, set up dedicated worker service."
-    # Keep the process alive but don't start celery
-    tail -f /dev/null
+    echo "✅ Starting Celery Worker for Browser Use agent workflows..."
+    # Use --uid to avoid root user warnings and enable browser automation
+    celery -A src.worker.celery_app worker --loglevel=info --uid=nobody
 else
     echo "✅ Starting FastAPI Server..."
     # Railway injects $PORT automatically

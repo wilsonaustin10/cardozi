@@ -88,15 +88,19 @@ async def _execute_browser_workflow(project_id: str, instructions: str, cookies:
         # Update project with session info
         _update_project_session(project_id, session_id)
         
-        # Configure browser for headless operation with live streaming
+        # Configure browser for cloud deployment
         browser_config = BrowserConfig(
-            headless=False,  # Set to False to enable live streaming
+            headless=True,  # Use headless for cloud deployment
             disable_security=True,
             extra_chromium_args=[
                 '--no-sandbox',
-                '--disable-dev-shm-usage',
+                '--disable-dev-shm-usage', 
                 '--disable-gpu',
-                '--remote-debugging-port=9222'  # Enable remote debugging for streaming
+                '--disable-extensions',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--remote-debugging-port=9222'
             ]
         )
         
