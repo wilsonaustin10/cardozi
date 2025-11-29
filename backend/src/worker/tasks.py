@@ -88,10 +88,11 @@ async def _execute_browser_workflow(project_id: str, instructions: str, cookies:
         # Update project with session info
         _update_project_session(project_id, session_id)
         
-        # Configure browser for cloud deployment
+        # Configure browser for cloud deployment with Chrome
         browser_config = BrowserConfig(
             headless=True,  # Use headless for cloud deployment
             disable_security=True,
+            chrome_executable_path="/usr/bin/google-chrome-stable",
             extra_chromium_args=[
                 '--no-sandbox',
                 '--disable-dev-shm-usage', 
@@ -100,6 +101,8 @@ async def _execute_browser_workflow(project_id: str, instructions: str, cookies:
                 '--disable-background-timer-throttling',
                 '--disable-backgrounding-occluded-windows',
                 '--disable-renderer-backgrounding',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
                 '--remote-debugging-port=9222'
             ]
         )
