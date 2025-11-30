@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.core.database import get_db, create_tables
+from src.core.database import get_db, create_tables, run_migrations
 from src.core.config import settings
 from src.domain.models import Project
 from src.worker.tasks import run_agent_workflow
@@ -48,8 +48,9 @@ class ProjectResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    """Create tables on startup"""
+    """Create tables and run migrations on startup"""
     await create_tables()
+    await run_migrations()
 
 
 @app.get("/")

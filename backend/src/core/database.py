@@ -60,3 +60,35 @@ async def create_tables():
     """Create all tables"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+async def run_migrations():
+    """Run database migrations to add missing columns"""
+    from sqlalchemy import text
+
+    migrations = [
+        # Add last_result column if it doesn't exist
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_name='projects' AND column_name='last_result') THEN
+                ALTER TABLE projects ADD COLUMN last_result JSON;
+            END IF;
+        END $$;
+        """,
+        # Add last_run_at column if it doesn't exist
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_name='projects' AND column_name='last_run_at') THEN
+                ALTER TABLE projects ADD COLUMN last_run_at TIMESTAMP;
+            END IF;
+        END $$;
+        """,
+    ]
+
+    async with engine.begin() as conn:
+        for migration in migrations:
+            await conn.execute(text(migration))
