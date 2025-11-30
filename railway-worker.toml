@@ -4,4 +4,5 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "SERVICE_TYPE=worker bash start.sh"
-restartPolicyType = "always"
+restartPolicyType = "on-failure"
+numReplicas = 1
