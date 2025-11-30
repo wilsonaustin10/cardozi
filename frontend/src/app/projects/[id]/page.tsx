@@ -17,6 +17,8 @@ interface Project {
   auth_cookies: any
   live_stream_url: string | null
   active_session_id: string | null
+  last_result: any
+  last_run_at: string | null
   created_at: string
   updated_at: string
 }
@@ -188,6 +190,57 @@ export default function ProjectDetailPage() {
                   title="Browser Stream"
                   allow="fullscreen"
                 />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Agent Results */}
+        {project.last_result && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Agent Results</CardTitle>
+              <CardDescription>
+                {project.last_run_at
+                  ? `Last run: ${new Date(project.last_run_at).toLocaleString()}`
+                  : 'No run timestamp available'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Status Badge */}
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm">Status:</span>
+                  <Badge className={project.last_result.status === 'COMPLETED' ? 'bg-green-500' : 'bg-orange-500'}>
+                    {project.last_result.status}
+                  </Badge>
+                </div>
+
+                {/* Output */}
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Output:</h4>
+                  <div className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-96">
+                    {typeof project.last_result.output === 'string' ? (
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {project.last_result.output}
+                      </p>
+                    ) : (
+                      <pre className="text-sm text-gray-800">
+                        {JSON.stringify(project.last_result.output, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                </div>
+
+                {/* Metadata */}
+                <div className="text-xs text-gray-500 space-y-1">
+                  {project.last_result.session_id && (
+                    <p>Session: {project.last_result.session_id}</p>
+                  )}
+                  {project.last_result.completed_at && (
+                    <p>Completed: {new Date(project.last_result.completed_at).toLocaleString()}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

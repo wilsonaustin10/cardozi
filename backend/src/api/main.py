@@ -8,6 +8,7 @@ from src.domain.models import Project
 from src.worker.tasks import run_agent_workflow
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+from datetime import datetime
 import uuid
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -39,6 +40,10 @@ class ProjectResponse(BaseModel):
     auth_cookies: Optional[Dict[Any, Any]] = None
     live_stream_url: Optional[str] = None
     active_session_id: Optional[str] = None
+    last_result: Optional[Dict[Any, Any]] = None
+    last_run_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @app.on_event("startup")
@@ -81,7 +86,11 @@ async def create_project(
         output_schema=db_project.output_schema,
         auth_cookies=db_project.auth_cookies,
         live_stream_url=db_project.live_stream_url,
-        active_session_id=db_project.active_session_id
+        active_session_id=db_project.active_session_id,
+        last_result=db_project.last_result,
+        last_run_at=db_project.last_run_at,
+        created_at=db_project.created_at,
+        updated_at=db_project.updated_at
     )
 
 
@@ -99,7 +108,11 @@ async def list_projects(db: AsyncSession = Depends(get_db)):
             output_schema=project.output_schema,
             auth_cookies=project.auth_cookies,
             live_stream_url=project.live_stream_url,
-            active_session_id=project.active_session_id
+            active_session_id=project.active_session_id,
+            last_result=project.last_result,
+            last_run_at=project.last_run_at,
+            created_at=project.created_at,
+            updated_at=project.updated_at
         )
         for project in projects
     ]
@@ -121,8 +134,18 @@ async def get_project(project_id: str, db: AsyncSession = Depends(get_db)):
         output_schema=project.output_schema,
         auth_cookies=project.auth_cookies,
         live_stream_url=project.live_stream_url,
-        active_session_id=project.active_session_id
+        active_session_id=project.active_session_id,
+        last_result=project.last_result,
+        last_run_at=project.last_run_at,
+        created_at=project.created_at,
+        updated_at=project.updated_at
     )
+
+
+@app.post("/projects/{project_id}/run")
+async def run_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Run the agent workflow for a project"""
+    return await start_project(project_id, db)
 
 
 @app.post("/projects/{project_id}/start")

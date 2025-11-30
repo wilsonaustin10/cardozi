@@ -113,23 +113,27 @@ def _execute_browser_workflow(project_id: str, instructions: str, cookies: dict,
     if 'BLOCKED' in str(output).upper():
         logger.info(f"Agent blocked for project {project_id}")
         _update_project_status(project_id, "BLOCKED", "Manual intervention required")
-        return {
+        result_data = {
             "session_id": session_id,
             "status": "BLOCKED",
             "stream_url": stream_url,
-            "result": output,
+            "output": output,
             "blocked_at": datetime.utcnow().isoformat()
         }
+        _update_project_result(project_id, result_data)
+        return result_data
 
     logger.info(f"Browser workflow completed successfully for project {project_id}")
 
-    return {
+    result_data = {
         "session_id": session_id,
         "status": "COMPLETED",
         "stream_url": stream_url,
-        "result": output,
+        "output": output,
         "completed_at": datetime.utcnow().isoformat()
     }
+    _update_project_result(project_id, result_data)
+    return result_data
 
 
 def _get_project(project_id: str) -> Project:
@@ -168,14 +172,31 @@ def _update_project_session(project_id: str, session_id: str, stream_url: str = 
         with get_db_sync() as db:
             result = db.execute(select(Project).where(Project.id == project_id))
             project = result.scalar_one_or_none()
-            
+
             if project:
                 project.active_session_id = session_id
                 project.live_stream_url = stream_url
                 db.commit()
                 logger.info(f"Updated project {project_id} with session {session_id} and stream URL")
-                
+
     except Exception as e:
         logger.error(f"Error updating project session: {e}")
+
+
+def _update_project_result(project_id: str, result_data: dict):
+    """Update project with the result from the last agent run"""
+    try:
+        with get_db_sync() as db:
+            result = db.execute(select(Project).where(Project.id == project_id))
+            project = result.scalar_one_or_none()
+
+            if project:
+                project.last_result = result_data
+                project.last_run_at = datetime.utcnow()
+                db.commit()
+                logger.info(f"Updated project {project_id} with agent result")
+
+    except Exception as e:
+        logger.error(f"Error updating project result: {e}")
 
 
