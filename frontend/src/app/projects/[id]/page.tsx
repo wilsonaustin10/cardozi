@@ -56,7 +56,7 @@ export default function ProjectDetailPage() {
   const runAgent = async () => {
     setExecuting(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/run`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/start`, {
         method: 'POST',
       })
       if (!res.ok) throw new Error('Failed to start agent')
