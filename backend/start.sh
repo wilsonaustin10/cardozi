@@ -2,10 +2,10 @@
 
 # Detect mode based on Railway Service Variable
 if [ "$SERVICE_TYPE" = "worker" ]; then
-    echo "✅ Starting Celery Worker..."
+    echo "✅ Starting Celery Worker as non-root user..."
+    # Run as celery user to avoid security warnings
     # Limit concurrency to 2 workers to stay within Railway memory limits
-    # Use solo pool for simpler execution (no prefork overhead)
-    celery -A src.worker.celery_app worker --loglevel=info --concurrency=2 --pool=solo
+    exec gosu celery celery -A src.worker.celery_app worker --loglevel=info --concurrency=2
 else
     echo "✅ Starting FastAPI Server..."
     # Railway injects $PORT automatically
